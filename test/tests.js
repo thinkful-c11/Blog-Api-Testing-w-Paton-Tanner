@@ -82,9 +82,10 @@ describe('Users', function(){
           content: res.content,
           author: `${res.author.firstName} ${res.author.lastName}`,
           created: res.created
-        };
+         };
         return chai.request(app)
         .get(`/posts/${foundUser.id}`)
+      })
         .then(function(currentPost){
           currentPost.body.id.should.equal(foundUser.id);
           currentPost.body.title.should.equal(foundUser.title);
@@ -92,7 +93,6 @@ describe('Users', function(){
           currentPost.body.content.should.equal(foundUser.content);
           currentPost.body.created.should.be.sameMoment(foundUser.created);
         });
-      });
   });
 
   it('Testing the post end point', function(){
@@ -110,6 +110,7 @@ describe('Users', function(){
       .then(function(newId){
         return chai.request(app)
         .get(`/posts/${newId}`)
+      })
       .then(function(checkPost){
         checkPost.body.id.should.equal(newPost.id);
         checkPost.body.title.should.equal(newPost.title);
@@ -117,6 +118,26 @@ describe('Users', function(){
         checkPost.body.created.should.equal(newPost.created);
         checkPost.body.author.should.equal(newPost.author);
       });
+  });
+
+  it('First delete test, it should remove post by id', function(){
+
+    let deletedId;
+
+    return BlogPost
+      .findOne()
+      .exec()
+      .then(function(res){
+        deletedId = res.id;
+        return chai.request(app).delete(`/posts/${deletedId}`)
+      })
+      .then(function(res){
+        res.should.have.status(204);
+        return BlogPost.findById(deletedId).exec();
+      })
+      .then(function(deletedCheck){
+        should.not.exist(deletedCheck);
       });
   });
+
 });
