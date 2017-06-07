@@ -7,8 +7,10 @@ const chaiHttp = require('chai-http');
 const mocha = require('mocha');
 const mongoose = require('mongoose');
 
+chai.use(require('chai-moment'));
 chai.use(chaiHttp);
 const should = chai.should();
+const expect = chai.expect();
 
 
 const generateUserData = ()=>{
@@ -34,6 +36,15 @@ beforeEach(function(){
   return seedData();
 });
 
+function tearDownDb(){
+  console.info('Deleting database');
+  return mongoose.connection.dropDatabase();
+}
+
+afterEach(function(){
+  return tearDownDb();
+});
+
 
 describe('Users', function(){
   before(function(){
@@ -52,17 +63,35 @@ describe('Users', function(){
       res.should.have.status(200);
       res.body.should.have.length.of.at.least(1);
       return BlogPost.count();
+    })
+    .then(function(count){
+      res.body.should.have.length(count);
     });
   });
 
-});
+  it('Get end point by id', function(){
+    let foundUser;
 
-
-const tearDownDb = ()=>{
-  console.info('Deleting database');
-  return mongoose.connection.dropDatabase();
-};
-
-afterEach(function(){
-  return tearDownDb;
+    return BlogPost
+      .findOne()
+      .exec()
+      .then(function(res){
+        foundUser = {
+          id: res.id,
+          title: res.title,
+          content: res.content,
+          author: `${res.author.firstName} ${res.author.lastName}`,
+          created: res.created
+        };
+        return chai.request(app)
+        .get(`/posts/${foundUser.id}`)
+        .then(function(currentPost){
+          currentPost.body.id.should.equal(foundUser.id);
+          currentPost.body.title.should.equal(foundUser.title);
+          currentPost.body.author.should.equal(foundUser.author);
+          currentPost.body.content.should.equal(foundUser.content);
+          currentPost.body.created.should.be.sameMoment(foundUser.created);
+        });
+      });
+  });
 });
