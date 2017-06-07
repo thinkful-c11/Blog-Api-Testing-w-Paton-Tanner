@@ -94,4 +94,29 @@ describe('Users', function(){
         });
       });
   });
+
+  it('Testing the post end point', function(){
+    let newPost = generateUserData();
+
+    return chai.request(app)
+      .post('/posts')
+      .send(newPost)
+      .then(function(res){
+        newPost = res.body;
+        res.should.have.status(201);
+        res.body.should.have.keys('title', 'id', 'author', 'content', 'created');
+        return res.body.id;
+      })
+      .then(function(newId){
+        return chai.request(app)
+        .get(`/posts/${newId}`)
+      .then(function(checkPost){
+        checkPost.body.id.should.equal(newPost.id);
+        checkPost.body.title.should.equal(newPost.title);
+        checkPost.body.content.should.equal(newPost.content);
+        checkPost.body.created.should.equal(newPost.created);
+        checkPost.body.author.should.equal(newPost.author);
+      });
+      });
+  });
 });
