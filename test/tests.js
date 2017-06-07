@@ -30,7 +30,7 @@ function seedData(){
     newData.push(generateUserData());
   }
   return BlogPost.insertMany(newData);
-};
+}
 
 beforeEach(function(){
   return seedData();
@@ -82,9 +82,9 @@ describe('Users', function(){
           content: res.content,
           author: `${res.author.firstName} ${res.author.lastName}`,
           created: res.created
-         };
+        };
         return chai.request(app)
-        .get(`/posts/${foundUser.id}`)
+        .get(`/posts/${foundUser.id}`);
       })
         .then(function(currentPost){
           currentPost.body.id.should.equal(foundUser.id);
@@ -109,7 +109,7 @@ describe('Users', function(){
       })
       .then(function(newId){
         return chai.request(app)
-        .get(`/posts/${newId}`)
+        .get(`/posts/${newId}`);
       })
       .then(function(checkPost){
         checkPost.body.id.should.equal(newPost.id);
@@ -129,7 +129,7 @@ describe('Users', function(){
       .exec()
       .then(function(res){
         deletedId = res.id;
-        return chai.request(app).delete(`/posts/${deletedId}`)
+        return chai.request(app).delete(`/posts/${deletedId}`);
       })
       .then(function(res){
         res.should.have.status(204);
@@ -140,4 +140,47 @@ describe('Users', function(){
       });
   });
 
+  it('First delete test, it should remove post by id', function(){
+
+    let deletedId;
+
+    return BlogPost
+      .findOne()
+      .exec()
+      .then(function(res){
+        deletedId = res.id;
+        return chai.request(app).delete(`/${deletedId}`);
+      })
+      .then(function(res){
+        res.should.have.status(204);
+        return BlogPost.findById(deletedId).exec();
+      })
+      .then(function(deletedCheck){
+        should.not.exist(deletedCheck);
+      });
+  });
+
+  it('Should update using the put request', function(){
+    let itemId;
+    let newItem = {
+      id: null,
+      title: "Testing is hard"
+    };
+    return BlogPost
+      .findOne()
+      .then(function(foundItem){
+        itemId = foundItem.id;
+        newItem.id = foundItem.id;
+        return chai.request(app)
+        .put(`/posts/${itemId}`)
+        .send(newItem);
+      })
+        .then(function(res){
+          res.should.have.status(201);
+          return BlogPost
+            .findById(itemId);
+        }).then(function(res){
+          res.title.should.equal(newItem.title);
+        });
+  });
 });
