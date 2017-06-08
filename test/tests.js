@@ -161,7 +161,6 @@ describe('Users', function(){
   });
 
   it('Should update using the put request', function(){
-    let itemId;
     let newItem = {
       id: null,
       title: "Testing is hard"
@@ -169,16 +168,15 @@ describe('Users', function(){
     return BlogPost
       .findOne()
       .then(function(foundItem){
-        itemId = foundItem.id;
         newItem.id = foundItem.id;
         return chai.request(app)
-        .put(`/posts/${itemId}`)
+        .put(`/posts/${newItem.id}`)
         .send(newItem);
       })
         .then(function(res){
           res.should.have.status(201);
           return BlogPost
-            .findById(itemId);
+            .findById(newItem.id);
         }).then(function(res){
           res.title.should.equal(newItem.title);
         });
